@@ -2,7 +2,7 @@
 
 // Determine API URL based on current environment (localhost vs github pages)
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isLocalhost ? 'http://localhost:8080/api' : 'https://bookkeeping-production-api.com/api'; // Replace with real production URL
+const API_BASE_URL = isLocalhost ? 'http://localhost:8080/api' : 'https://bookkeeping-eizv.onrender.com/api';
 
 // Extract CSRF Token from Cookie
 function getCsrfToken() {
