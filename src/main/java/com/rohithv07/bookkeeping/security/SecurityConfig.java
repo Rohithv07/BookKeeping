@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(requestHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/csrf").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll() // Allow static resources or unknown paths by default
                 )

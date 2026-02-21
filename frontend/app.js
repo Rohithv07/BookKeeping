@@ -4,10 +4,25 @@
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = isLocalhost ? 'http://localhost:8080/api' : 'https://bookkeeping-eizv.onrender.com/api';
 
-// Extract CSRF Token from Cookie
+// Extract CSRF Token via Endpoint instead of Cookie (Cross-Origin workaround)
+let cachedCsrfToken = '';
 function getCsrfToken() {
-    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : '';
+    return cachedCsrfToken;
+}
+
+async function fetchCsrfToken() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/csrf`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            cachedCsrfToken = data.token;
+        }
+    } catch (e) {
+        console.error('Could not fetch CSRF token', e);
+    }
 }
 
 // DOM Elements
@@ -167,8 +182,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize App Data
 function initializeData() {
-    fetchBorrowers();
-    fetchActiveLoans();
+    fetchCsrfToken().then(() => {
+        fetchBorrowers();
+        fetchActiveLoans();
+    });
 }
 
 // --- API Calls & Handlers ---
