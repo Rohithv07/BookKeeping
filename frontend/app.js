@@ -1,41 +1,204 @@
 // app.js
 
-const API_BASE_URL = 'http://localhost:8080/api';
+// Determine API URL based on current environment (localhost vs github pages)
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocalhost ? 'http://localhost:8080/api' : 'https://bookkeeping-production-api.com/api'; // Replace with real production URL
+
+// Extract CSRF Token from Cookie
+function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
 
 // DOM Elements
+const loginContainer = document.getElementById('loginContainer');
+const loginCard = document.getElementById('loginCard');
+const signupCard = document.getElementById('signupCard');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+const signupForm = document.getElementById('signupForm');
+const signupError = document.getElementById('signupError');
+const appContainer = document.getElementById('appContainer');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Toggles
+const linkShowSignup = document.getElementById('showSignup');
+const linkShowLogin = document.getElementById('showLogin');
+
 const borrowerForm = document.getElementById('borrower-form');
 const loanForm = document.getElementById('loan-form');
-const borrowerSelect = document.getElementById('loan-borrower');
+const borrowerSelect = document.getElementById('loan-borrower'); // Keep original name for consistency with other parts
 const loansTableBody = document.getElementById('loans-table-body');
 const btnRefresh = document.getElementById('btn-refresh');
 const alertsContainer = document.getElementById('alerts-container');
 const btnAddBorrower = document.getElementById('btn-add-borrower');
 const btnAddLoan = document.getElementById('btn-add-loan');
 
+// Auth Handlers
+function showLogin() {
+    appContainer.style.display = 'none';
+    loginContainer.style.display = 'flex';
+    loginCard.style.display = 'block';
+    signupCard.style.display = 'none';
+}
+
+function showApp() {
+    loginContainer.style.display = 'none';
+    appContainer.style.display = 'block';
+}
+
 // Initialize On Load
 document.addEventListener('DOMContentLoaded', () => {
     // Set default date to today for loan form
     document.getElementById('loan-date').valueAsDate = new Date();
-    
-    // Fetch initial data
-    fetchBorrowers();
-    fetchActiveLoans();
+
+    // Fetch initial data (will trigger auth check)
+    initializeData();
 
     // Event Listeners
     borrowerForm.addEventListener('submit', handleBorrowerSubmit);
     loanForm.addEventListener('submit', handleLoanSubmit);
     btnRefresh.addEventListener('click', fetchActiveLoans);
+
+    // Authentication Listeners
+    linkShowSignup.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginCard.style.display = 'none';
+        signupCard.style.display = 'block';
+        loginForm.reset();
+        loginError.style.display = 'none';
+    });
+
+    linkShowLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        signupCard.style.display = 'none';
+        loginCard.style.display = 'block';
+        signupForm.reset();
+        signupError.style.display = 'none';
+    });
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Authenticating...';
+        loginError.style.display = 'none';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: loginForm.username.value,
+                    password: loginForm.password.value
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Invalid credentials');
+            }
+
+            // Successfully logged in
+            showApp();
+            initializeData(); // Re-fetch data after successful login
+        } catch (error) {
+            loginError.textContent = error.message.includes('fetch') ? 'Network error. Is backend running?' : 'Invalid username or password.';
+            loginError.style.display = 'block';
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const signupBtn = document.getElementById('signupBtn');
+        signupBtn.disabled = true;
+        signupBtn.textContent = 'Creating account...';
+        signupError.style.display = 'none';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: signupForm['reg-username'].value,
+                    password: signupForm['reg-password'].value
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to create account.');
+            }
+
+            // Success! Flip to login view.
+            signupForm.reset();
+            signupCard.style.display = 'none';
+            loginCard.style.display = 'block';
+
+            // Re-use our own unified alert box (assuming they aren't completely hidden by login container overlap)
+            // But since alerts container is in the hidden app... let's just use native alert for now.
+            window.alert('Account created successfully! You may now login.');
+        } catch (error) {
+            signupError.textContent = error.message;
+            signupError.style.display = 'block';
+        } finally {
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Sign Up';
+        }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } finally {
+            loginForm.reset();
+            showLogin();
+            showAlert('You have been safely logged out.', 'success');
+        }
+    });
 });
+
+// Initialize App Data
+function initializeData() {
+    fetchBorrowers();
+    fetchActiveLoans();
+}
 
 // --- API Calls & Handlers ---
 
 async function fetchBorrowers() {
     try {
-        const response = await fetch(`${API_BASE_URL}/borrowers`);
-        if (!response.ok) throw new Error('Failed to fetch borrowers');
-        
+        const response = await fetch(`${API_BASE_URL}/borrowers`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            if (response.status === 401) { showLogin(); return; }
+            throw new Error(`Failed to fetch borrowers: ${response.statusText}`);
+        }
+
         const borrowers = await response.json();
-        populateBorrowerSelect(borrowers);
+
+        // Populate select dropdown
+        borrowerSelect.innerHTML = '<option value="" disabled selected>-- Select a Borrower --</option>';
+        if (borrowers.length === 0) {
+            borrowerSelect.innerHTML = `<option value="" disabled selected>No borrowers found. Add one first.</option>`;
+            return;
+        }
+        borrowers.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b.id;
+            option.textContent = `${b.name} (${b.email})`;
+            borrowerSelect.appendChild(option);
+        });
     } catch (error) {
         showAlert('Error loading borrowers. Is the server running?', 'error');
         console.error(error);
@@ -45,11 +208,22 @@ async function fetchBorrowers() {
 async function fetchActiveLoans() {
     loansTableBody.innerHTML = `<tr><td colspan="5" class="text-center loading-state">Fetching active loans...</td></tr>`;
     try {
-        const response = await fetch(`${API_BASE_URL}/loans`);
-        if (!response.ok) throw new Error('Failed to fetch loans');
-        
+        const response = await fetch(`${API_BASE_URL}/loans`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'include' // Sent HttpOnly JWT cookie automatically
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) { showLogin(); return; }
+            throw new Error(`Failed to fetch active loans: ${response.statusText}`);
+        }
+
         const loans = await response.json();
         renderLoansTable(loans);
+        showApp(); // Unhide if successful auth
     } catch (error) {
         loansTableBody.innerHTML = `<tr><td colspan="5" class="text-center empty-state">Error loading connection to server.</td></tr>`;
         console.error(error);
@@ -69,11 +243,17 @@ async function handleBorrowerSubmit(e) {
     try {
         const response = await fetch(`${API_BASE_URL}/borrowers`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken()
+            },
+            credentials: 'include',
             body: JSON.stringify(borrowerData)
         });
 
         if (!response.ok) {
+            if (response.status === 401) { showLogin(); return; }
             const err = await response.json();
             throw new Error(err.message || 'Validation failed');
         }
@@ -101,11 +281,17 @@ async function handleLoanSubmit(e) {
     try {
         const response = await fetch(`${API_BASE_URL}/loans`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken()
+            },
+            credentials: 'include',
             body: JSON.stringify(loanData)
         });
 
         if (!response.ok) {
+            if (response.status === 401) { showLogin(); return; }
             const err = await response.json();
             throw new Error(err.message || 'Validation failed');
         }
@@ -121,32 +307,38 @@ async function handleLoanSubmit(e) {
     }
 }
 
-async function handleMarkRepaid(loanId) {
+// Mark loan as repaid
+async function markLoanRepaid(loanId) {
     if (!confirm('Are you sure you want to mark this loan as fully repaid?')) return;
 
     try {
         const response = await fetch(`${API_BASE_URL}/loans/${loanId}/repay`, {
-            method: 'PUT'
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken()
+            },
+            credentials: 'include'
         });
 
-        if (!response.ok) throw new Error('Failed to update loan status');
-        
-        showAlert('Loan marked as repaid.', 'success');
-        await fetchActiveLoans(); // Refresh table
+        if (!response.ok) {
+            if (response.status === 401) { showLogin(); return; }
+            throw new Error('Failed to mark loan as repaid');
+        }
+
+        showAlert('Loan successfully marked as repaid.', 'success');
+        fetchActiveLoans(); // Refresh table
     } catch (error) {
-        showAlert(error.message, 'error');
+        console.error('Error repaying loan:', error);
+        showAlert('An error occurred while repaying the loan.', 'error');
     }
 }
 
 // --- UI Rendering ---
 
+// The populateBorrowerSelect function was integrated directly into fetchBorrowers for the new logic.
+// Keeping this empty for now as the new logic is in fetchBorrowers.
 function populateBorrowerSelect(borrowers) {
-    if (borrowers.length === 0) {
-        borrowerSelect.innerHTML = `<option value="" disabled selected>No borrowers found. Add one first.</option>`;
-        return;
-    }
-
-    borrowerSelect.innerHTML = `<option value="" disabled selected>-- Select a Borrower --</option>`;
     borrowers.forEach(b => {
         const option = document.createElement('option');
         option.value = b.id;
@@ -166,7 +358,7 @@ function renderLoansTable(loans) {
         // Safe check for borrower name directly mapped from LoanDto
         const borrowerName = loan.borrowerName || `Borrower #${loan.borrowerId}`;
         const amountFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(loan.amount);
-        
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><strong>${escapeHtml(borrowerName)}</strong></td>
@@ -191,13 +383,13 @@ function showAlert(message, type) {
     alertEl.className = `alert alert-${type}`;
     alertEl.id = `alert-${alertId}`;
     alertEl.textContent = message;
-    
+
     alertsContainer.appendChild(alertEl);
-    
+
     // Auto dismiss after 5 seconds
     setTimeout(() => {
         const el = document.getElementById(`alert-${alertId}`);
-        if(el) {
+        if (el) {
             el.style.opacity = '0';
             setTimeout(() => el.remove(), 300); // Wait for fade transition
         }
@@ -219,14 +411,14 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const parts = dateString.split('-');
     // Ensuring exact local rendering from YYYY-MM-DD string
-    return `${parts[1]}/${parts[2]}/${parts[0]}`; 
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
 }
 
 function escapeHtml(unsafe) {
     return (unsafe || "").toString()
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }

@@ -7,15 +7,17 @@ import com.rohithv07.bookkeeping.model.Loan;
 import com.rohithv07.bookkeeping.model.LoanStatus;
 import com.rohithv07.bookkeeping.repository.BorrowerRepository;
 import com.rohithv07.bookkeeping.repository.LoanRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 public class LoanServiceImpl implements LoanService {
+
+    private static final Logger log = LoggerFactory.getLogger(LoanServiceImpl.class);
 
     // Explicit constructor injection without Lombok magic
     private final LoanRepository loanRepository;

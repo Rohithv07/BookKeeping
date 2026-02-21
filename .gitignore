@@ -60,3 +60,8 @@ node_modules/
 
 ### Antigravity Artifacts ###
 .gemini/
+*.jar
+*.war
+*.ear
+*.class
+

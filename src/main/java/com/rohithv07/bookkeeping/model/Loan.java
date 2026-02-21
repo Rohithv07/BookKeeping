@@ -40,9 +40,6 @@ public class Loan {
     @Enumerated(EnumType.STRING)
     private LoanStatus status = LoanStatus.ACTIVE;
 
-    @Builder.Default
-    private boolean reminderSent = false;
-
     @PrePersist
     public void prePersist() {
         if (this.dueDate == null && this.dateLent != null) {

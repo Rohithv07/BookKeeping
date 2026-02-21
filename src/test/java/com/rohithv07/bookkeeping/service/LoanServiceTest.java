@@ -54,7 +54,6 @@ class LoanServiceTest {
                 .dateLent(LocalDate.now().minusDays(15))
                 .dueDate(LocalDate.now().plusDays(15))
                 .status(LoanStatus.ACTIVE)
-                .reminderSent(false)
                 .build();
 
         sampleLoanDto = LoanDto.builder()
@@ -132,7 +131,6 @@ class LoanServiceTest {
                 .dateLent(sampleLoan.getDateLent())
                 .dueDate(sampleLoan.getDueDate())
                 .status(LoanStatus.REPAID)
-                .reminderSent(sampleLoan.isReminderSent())
                 .build();
 
         when(loanRepository.save(any(Loan.class))).thenReturn(repaidLoan);

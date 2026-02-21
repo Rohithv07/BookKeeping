@@ -20,13 +20,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@WithMockUser(username = "admin")
 class LoanControllerIntegrationTest {
 
         @Autowired
@@ -63,7 +67,7 @@ class LoanControllerIntegrationTest {
                                 .dateLent(LocalDate.now())
                                 .build();
 
-                mockMvc.perform(post("/api/loans")
+                mockMvc.perform(post("/api/loans").with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(loanDto)))
                                 .andExpect(status().isOk())
@@ -99,7 +103,7 @@ class LoanControllerIntegrationTest {
                                 .build();
                 Loan savedLoan = loanRepository.save(loan);
 
-                mockMvc.perform(put("/api/loans/" + savedLoan.getId() + "/repay"))
+                mockMvc.perform(put("/api/loans/" + savedLoan.getId() + "/repay").with(csrf()))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value("REPAID"));
         }
