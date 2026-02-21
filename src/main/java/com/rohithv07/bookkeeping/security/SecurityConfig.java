@@ -35,15 +35,9 @@ public class SecurityConfig {
         // Set the name of the attribute the CsrfToken will be populated on
         requestHandler.setCsrfRequestAttributeName(null);
 
-        CookieCsrfTokenRepository cookieRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        cookieRepository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true));
-
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/**")
-                        .csrfTokenRepository(cookieRepository)
-                        .csrfTokenRequestHandler(requestHandler))
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/csrf").permitAll()
