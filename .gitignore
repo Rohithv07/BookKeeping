@@ -51,5 +51,12 @@ Icon
 .env.local
 .env.*.local
 
+### Database Dumps ###
+*.sql
+*.sqlite
+
+### Node (Placeholder for future) ###
+node_modules/
+
 ### Antigravity Artifacts ###
 .gemini/

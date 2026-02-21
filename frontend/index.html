@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookkeeping Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container">
+            <h1>Bookkeeping</h1>
+            <p>Track your lent money effortlessly.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <div id="alerts-container" aria-live="polite"></div>
+
+        <div class="grid-layout">
+            <!-- Forms Section -->
+            <section class="forms-section">
+                <!-- Add Borrower Form -->
+                <div class="card card-primary">
+                    <h2><span aria-hidden="true">+</span> Add Borrower</h2>
+                    <form id="borrower-form">
+                        <div class="form-group">
+                            <label for="borrower-name">Full Name <span class="required" aria-label="required">*</span></label>
+                            <input type="text" id="borrower-name" name="name" required placeholder="John Doe" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="borrower-email">Email Address <span class="required" aria-label="required">*</span></label>
+                            <input type="email" id="borrower-email" name="email" required placeholder="john@example.com" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="borrower-phone">Phone Number</label>
+                            <input type="tel" id="borrower-phone" name="phone" placeholder="+1234567890">
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-add-borrower">Save Borrower</button>
+                    </form>
+                </div>
+
+                <!-- Add Loan Form -->
+                <div class="card card-secondary">
+                    <h2><span aria-hidden="true">$</span> Record New Loan</h2>
+                    <form id="loan-form">
+                        <div class="form-group">
+                            <label for="loan-borrower">Select Borrower <span class="required" aria-label="required">*</span></label>
+                            <select id="loan-borrower" name="borrowerId" required aria-required="true">
+                                <option value="" disabled selected>Loading borrowers...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="loan-amount">Amount Lent <span class="required" aria-label="required">*</span></label>
+                            <input type="number" id="loan-amount" name="amount" min="0.01" step="0.01" required placeholder="100.00" aria-required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="loan-date">Date Lent <span class="required" aria-label="required">*</span></label>
+                            <input type="date" id="loan-date" name="dateLent" required aria-required="true">
+                        </div>
+                        <button type="submit" class="btn btn-secondary" id="btn-add-loan">Record Loan</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Active Loans Dashboard Section -->
+            <section class="dashboard-section">
+                <div class="card card-dashboard">
+                    <div class="dashboard-header">
+                        <h2>Active Loans</h2>
+                        <button id="btn-refresh" class="btn btn-icon" aria-label="Refresh Loans List" title="Refresh">
+                            ↻
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="loans-table" aria-label="List of active loans">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Borrower</th>
+                                    <th scope="col" class="text-right">Amount</th>
+                                    <th scope="col">Date Lent</th>
+                                    <th scope="col">Due Date</th>
+                                    <th scope="col" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loans-table-body">
+                                <tr>
+                                    <td colspan="5" class="text-center loading-state">Fetching active loans...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>&copy; <script>document.write(new Date().getFullYear())</script> Personal Bookkeeping App. Built with Spring Boot & Vanilla JS.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

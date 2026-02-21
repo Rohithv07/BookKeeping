@@ -3,8 +3,12 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ "main", "master" ]
+    paths-ignore:
+      - 'frontend/**'
   pull_request:
     branches: [ "main", "master" ]
+    paths-ignore:
+      - 'frontend/**'
 
 jobs:
   build:
