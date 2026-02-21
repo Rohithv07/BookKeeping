@@ -129,7 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.message || 'Failed to create account.');
+                const defaultMsg = 'Failed to create account.';
+                const parsedMsg = (typeof err === 'object' && err !== null) ? (err.message || Object.values(err)[0] || defaultMsg) : defaultMsg;
+                throw new Error(parsedMsg);
             }
 
             // Success! Flip to login view.
