@@ -86,6 +86,21 @@ public class LoanServiceImpl implements LoanService {
         log.debug("Loan ID {} successfully deleted", id);
     }
 
+    @Override
+    public void repayLoan(Long id, java.math.BigDecimal amount) {
+        log.info("Processing repayment of {} for loan ID {}", amount, id);
+        Loan loan = getLoanEntityById(id);
+        java.math.BigDecimal newAmount = loan.getAmount().subtract(amount);
+        if (newAmount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            log.debug("Loan {} fully repaid. Deleting record.", id);
+            loanRepository.delete(loan);
+        } else {
+            log.debug("Loan {} partially repaid. Remaining balance: {}", id, newAmount);
+            loan.setAmount(newAmount);
+            loanRepository.save(loan);
+        }
+    }
+
     // Internal helper to get entity
     private Loan getLoanEntityById(Long id) {
         return loanRepository.findById(id)

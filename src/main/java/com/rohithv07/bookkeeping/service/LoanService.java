@@ -13,4 +13,6 @@ public interface LoanService {
     LoanDto getLoanById(Long id);
 
     void deleteLoan(Long id);
+
+    void repayLoan(Long id, java.math.BigDecimal amount);
 }

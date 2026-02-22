@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import com.rohithv07.bookkeeping.dto.RepaymentRequest;
 import java.util.List;
 
 @RestController
@@ -43,6 +44,13 @@ public class LoanController {
     public ResponseEntity<Void> deleteLoan(@PathVariable Long id) {
         log.info("REST request to delete loan ID {}", id);
         loanService.deleteLoan(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/repay")
+    public ResponseEntity<Void> repayLoan(@PathVariable Long id, @Valid @RequestBody RepaymentRequest request) {
+        log.info("REST request to partial/full repay loan ID {}", id);
+        loanService.repayLoan(id, request.getAmount());
         return ResponseEntity.noContent().build();
     }
 }

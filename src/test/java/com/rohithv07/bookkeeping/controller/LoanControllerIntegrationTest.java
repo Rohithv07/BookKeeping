@@ -106,4 +106,26 @@ class LoanControllerIntegrationTest {
                 mockMvc.perform(delete("/api/loans/" + savedLoan.getId()).with(csrf()))
                                 .andExpect(status().isNoContent());
         }
+
+        @Test
+        void repayLoan_PartialAmount_ShouldReturnNoContent() throws Exception {
+                Loan loan = Loan.builder()
+                                .borrower(savedBorrower)
+                                .amount(new BigDecimal("500.00"))
+                                .dateLent(LocalDate.now())
+                                .dueDate(LocalDate.now().plusMonths(1))
+                                .status(LoanStatus.ACTIVE)
+                                .build();
+                Loan savedLoan = loanRepository.save(loan);
+
+                com.rohithv07.bookkeeping.dto.RepaymentRequest request = com.rohithv07.bookkeeping.dto.RepaymentRequest
+                                .builder()
+                                .amount(new BigDecimal("200.00"))
+                                .build();
+
+                mockMvc.perform(put("/api/loans/" + savedLoan.getId() + "/repay").with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isNoContent());
+        }
 }

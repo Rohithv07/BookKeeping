@@ -326,29 +326,37 @@ async function handleLoanSubmit(e) {
     }
 }
 
-// Delete loan (Mark as repaid)
+// Repay loan (Partial or Full)
 async function markLoanRepaid(loanId) {
-    if (!confirm('Are you sure you want to mark this loan as fully repaid? This will permanently delete the record.')) return;
+    const amountStr = prompt('Enter the amount repaid:');
+    if (amountStr === null) return; // User cancelled
+
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+        showAlert('Please enter a valid amount greater than 0.', 'error');
+        return;
+    }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
-            method: 'DELETE',
+        const response = await fetch(`${API_BASE_URL}/loans/${loanId}/repay`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
+            body: JSON.stringify({ amount: amount }),
             credentials: 'include'
         });
 
         if (!response.ok) {
             if (response.status === 401) { showLogin(); return; }
-            throw new Error('Failed to delete loan');
+            throw new Error('Failed to process repayment');
         }
 
-        showAlert('Loan successfully marked as repaid (deleted).', 'success');
+        showAlert('Repayment processed successfully.', 'success');
         fetchActiveLoans(); // Refresh table
     } catch (error) {
-        console.error('Error deleting loan:', error);
-        showAlert('An error occurred while deleting the loan.', 'error');
+        console.error('Error processing repayment:', error);
+        showAlert('An error occurred while processing the repayment.', 'error');
     }
 }
 
@@ -384,8 +392,8 @@ function renderLoansTable(loans) {
             <td>${formatDate(loan.dateLent)}</td>
             <td>${formatDate(loan.dueDate)}</td>
             <td class="text-center">
-                <button class="btn btn-secondary btn-sm" onclick="markLoanRepaid(${loan.id})" aria-label="Mark loan ${loan.id} as repaid">
-                    <i class="fas fa-check"></i> Mark Repaid
+                <button class="btn btn-secondary btn-sm" onclick="markLoanRepaid(${loan.id})" aria-label="Repay loan ${loan.id}">
+                    <i class="fas fa-money-bill-wave"></i> Repay
                 </button>
             </td>
         `;

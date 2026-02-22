@@ -129,4 +129,28 @@ class LoanServiceTest {
         verify(loanRepository, times(1)).findById(100L);
         verify(loanRepository, times(1)).delete(sampleLoan);
     }
+
+    @Test
+    void repayLoan_PartialAmount_ShouldUpdateLoan() {
+        when(loanRepository.findById(100L)).thenReturn(Optional.of(sampleLoan));
+        // Current amount is 500. Repaying 200 should leave 300.
+
+        loanService.repayLoan(100L, new BigDecimal("200.00"));
+
+        verify(loanRepository, times(1)).findById(100L);
+        verify(loanRepository, times(1)).save(sampleLoan);
+        assertEquals(new BigDecimal("300.00"), sampleLoan.getAmount());
+    }
+
+    @Test
+    void repayLoan_EqualOrGreaterAmount_ShouldDeleteLoan() {
+        when(loanRepository.findById(100L)).thenReturn(Optional.of(sampleLoan));
+        // Current amount is 500. Repaying 600 should delete it.
+
+        loanService.repayLoan(100L, new BigDecimal("600.00"));
+
+        verify(loanRepository, times(1)).findById(100L);
+        verify(loanRepository, times(1)).delete(sampleLoan);
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
 }
