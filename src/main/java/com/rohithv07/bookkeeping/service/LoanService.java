@@ -12,5 +12,5 @@ public interface LoanService {
 
     LoanDto getLoanById(Long id);
 
-    LoanDto markAsRepaid(Long id);
+    void deleteLoan(Long id);
 }

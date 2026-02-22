@@ -79,14 +79,11 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
-    public LoanDto markAsRepaid(Long id) {
-        log.info("Marking loan ID {} as REPAID", id);
+    public void deleteLoan(Long id) {
+        log.info("Deleting loan ID {}", id);
         Loan loan = getLoanEntityById(id);
-        loan.setStatus(LoanStatus.REPAID);
-        Loan updatedLoan = loanRepository.save(loan);
-        log.debug("Loan ID {} successfully marked as REPAID", id);
-
-        return mapToDto(updatedLoan);
+        loanRepository.delete(loan);
+        log.debug("Loan ID {} successfully deleted", id);
     }
 
     // Internal helper to get entity

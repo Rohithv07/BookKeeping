@@ -121,25 +121,12 @@ class LoanServiceTest {
     }
 
     @Test
-    void markAsRepaid_ExistingActiveLoan_ShouldUpdateStatus() {
+    void deleteLoan_ExistingActiveLoan_ShouldDelete() {
         when(loanRepository.findById(100L)).thenReturn(Optional.of(sampleLoan));
-        // Mock save returning the same loan but with REPAID status
-        Loan repaidLoan = Loan.builder()
-                .id(100L)
-                .borrower(sampleBorrower)
-                .amount(sampleLoan.getAmount())
-                .dateLent(sampleLoan.getDateLent())
-                .dueDate(sampleLoan.getDueDate())
-                .status(LoanStatus.REPAID)
-                .build();
 
-        when(loanRepository.save(any(Loan.class))).thenReturn(repaidLoan);
+        loanService.deleteLoan(100L);
 
-        LoanDto updatedLoan = loanService.markAsRepaid(100L);
-
-        assertNotNull(updatedLoan);
-        assertEquals(LoanStatus.REPAID, updatedLoan.getStatus());
         verify(loanRepository, times(1)).findById(100L);
-        verify(loanRepository, times(1)).save(any(Loan.class));
+        verify(loanRepository, times(1)).delete(sampleLoan);
     }
 }

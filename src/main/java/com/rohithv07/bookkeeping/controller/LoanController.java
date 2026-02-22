@@ -39,9 +39,10 @@ public class LoanController {
         return ResponseEntity.ok(loanService.getLoanById(id));
     }
 
-    @PutMapping("/{id}/repay")
-    public ResponseEntity<LoanDto> markAsRepaid(@PathVariable Long id) {
-        log.info("REST request to mark loan ID {} as repaid", id);
-        return ResponseEntity.ok(loanService.markAsRepaid(id));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLoan(@PathVariable Long id) {
+        log.info("REST request to delete loan ID {}", id);
+        loanService.deleteLoan(id);
+        return ResponseEntity.noContent().build();
     }
 }

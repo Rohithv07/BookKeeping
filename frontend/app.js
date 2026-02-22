@@ -326,30 +326,29 @@ async function handleLoanSubmit(e) {
     }
 }
 
-// Mark loan as repaid
+// Delete loan (Mark as repaid)
 async function markLoanRepaid(loanId) {
-    if (!confirm('Are you sure you want to mark this loan as fully repaid?')) return;
+    if (!confirm('Are you sure you want to mark this loan as fully repaid? This will permanently delete the record.')) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/loans/${loanId}/repay`, {
-            method: 'PUT',
+        const response = await fetch(`${API_BASE_URL}/loans/${loanId}`, {
+            method: 'DELETE',
             headers: {
-                'Accept': 'application/json',
-                'X-XSRF-TOKEN': getCsrfToken()
+                'Content-Type': 'application/json'
             },
             credentials: 'include'
         });
 
         if (!response.ok) {
             if (response.status === 401) { showLogin(); return; }
-            throw new Error('Failed to mark loan as repaid');
+            throw new Error('Failed to delete loan');
         }
 
-        showAlert('Loan successfully marked as repaid.', 'success');
+        showAlert('Loan successfully marked as repaid (deleted).', 'success');
         fetchActiveLoans(); // Refresh table
     } catch (error) {
-        console.error('Error repaying loan:', error);
-        showAlert('An error occurred while repaying the loan.', 'error');
+        console.error('Error deleting loan:', error);
+        showAlert('An error occurred while deleting the loan.', 'error');
     }
 }
 
@@ -385,8 +384,8 @@ function renderLoansTable(loans) {
             <td>${formatDate(loan.dateLent)}</td>
             <td>${formatDate(loan.dueDate)}</td>
             <td class="text-center">
-                <button class="btn btn-secondary btn-sm" onclick="handleMarkRepaid(${loan.id})" aria-label="Mark loan ${loan.id} as repaid">
-                    Mark Repaid
+                <button class="btn btn-secondary btn-sm" onclick="markLoanRepaid(${loan.id})" aria-label="Mark loan ${loan.id} as repaid">
+                    <i class="fas fa-check"></i> Mark Repaid
                 </button>
             </td>
         `;
