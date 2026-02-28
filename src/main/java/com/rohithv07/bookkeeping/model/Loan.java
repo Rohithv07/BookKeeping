@@ -36,6 +36,10 @@ public class Loan {
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;
 
+    @Column(length = 3)
+    @Builder.Default
+    private String currency = "USD";
+
     @NotNull(message = "Date lent is required")
     private LocalDate dateLent;
 

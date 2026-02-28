@@ -51,9 +51,14 @@ public class LoanServiceImpl implements LoanService {
                         () -> new ResourceNotFoundException(
                                 "Borrower not found natively or access denied for ID: " + loanDto.getBorrowerId()));
 
+        String finalCurrency = (loanDto.getCurrency() != null && !loanDto.getCurrency().trim().isEmpty())
+                ? loanDto.getCurrency().trim().toUpperCase()
+                : "USD";
+
         Loan loan = Loan.builder()
                 .borrower(borrower)
                 .amount(loanDto.getAmount())
+                .currency(finalCurrency)
                 .dateLent(loanDto.getDateLent())
                 .status(LoanStatus.ACTIVE)
                 .user(user)
@@ -134,6 +139,7 @@ public class LoanServiceImpl implements LoanService {
                 .borrowerId(loan.getBorrower() != null ? loan.getBorrower().getId() : null)
                 .borrowerName(loan.getBorrower() != null ? loan.getBorrower().getName() : null)
                 .amount(loan.getAmount())
+                .currency(loan.getCurrency())
                 .dateLent(loan.getDateLent())
                 .dueDate(loan.getDueDate())
                 .status(loan.getStatus())

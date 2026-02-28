@@ -29,84 +29,85 @@ import io.github.bucket4j.Refill;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final JwtUtil jwtUtil;
-    private final AppUserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final Map<String, Bucket> loginBuckets = new ConcurrentHashMap<>();
+        private final JwtUtil jwtUtil;
+        private final AppUserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final Map<String, Bucket> loginBuckets = new ConcurrentHashMap<>();
 
-    @Value("${app.security.jwt.expiration}")
-    private long jwtExpiration;
+        @Value("${app.security.jwt.expiration}")
+        private long jwtExpiration;
 
-    public AuthController(JwtUtil jwtUtil, AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @PostMapping("/signup")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("{\"message\": \"Error: Username is already taken!\"}");
+        public AuthController(JwtUtil jwtUtil, AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+                this.jwtUtil = jwtUtil;
+                this.userRepository = userRepository;
+                this.passwordEncoder = passwordEncoder;
         }
 
-        // Create new user's account
-        AppUser user = AppUser.builder()
-                .username(signUpRequest.getUsername())
-                .password(passwordEncoder.encode(signUpRequest.getPassword()))
-                .build();
+        @PostMapping("/signup")
+        public ResponseEntity<String> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+                if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                        .body("{\"message\": \"Error: Username is already taken!\"}");
+                }
 
-        userRepository.save(user);
+                // Create new user's account
+                AppUser user = AppUser.builder()
+                                .username(signUpRequest.getUsername())
+                                .password(passwordEncoder.encode(signUpRequest.getPassword()))
+                                .build();
 
-        return ResponseEntity.ok("{\"message\": \"User registered successfully!\"}");
-    }
+                userRepository.save(user);
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginRequest) {
-        String inputUsername = loginRequest.getUsername();
-        Bucket bucket = loginBuckets.computeIfAbsent(inputUsername, k -> Bucket.builder()
-                .addLimit(Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1))))
-                .build());
-
-        if (!bucket.tryConsume(1)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body("{\"message\": \"Too many login attempts. Please try again later.\"}");
+                return ResponseEntity.ok("{\"message\": \"User registered successfully!\"}");
         }
 
-        Optional<AppUser> userOptional = userRepository.findByUsername(inputUsername);
+        @PostMapping("/login")
+        public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginRequest) {
+                String inputUsername = loginRequest.getUsername();
+                Bucket bucket = loginBuckets.computeIfAbsent(inputUsername, k -> Bucket.builder()
+                                .addLimit(Bandwidth.classic(5, Refill.greedy(5, Duration.ofMinutes(1))))
+                                .build());
 
-        if (userOptional.isPresent()
-                && passwordEncoder.matches(loginRequest.getPassword(), userOptional.get().getPassword())) {
-            String token = jwtUtil.generateToken(userOptional.get().getUsername());
+                if (!bucket.tryConsume(1)) {
+                        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                                        .body("{\"message\": \"Too many login attempts. Please try again later.\"}");
+                }
 
-            ResponseCookie cookie = ResponseCookie.from("jwt", token)
-                    .httpOnly(true)
-                    .secure(true) // Typically true in production for HTTPS
-                    .path("/")
-                    .maxAge(Duration.ofMillis(jwtExpiration))
-                    .sameSite("None") // "None" if cross-domain in prod, but needs Secure=true
-                    .build();
+                Optional<AppUser> userOptional = userRepository.findByUsername(inputUsername);
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body("{\"message\": \"Login successful\"}");
+                if (userOptional.isPresent()
+                                && passwordEncoder.matches(loginRequest.getPassword(),
+                                                userOptional.get().getPassword())) {
+                        String token = jwtUtil.generateToken(userOptional.get().getUsername());
+
+                        ResponseCookie cookie = ResponseCookie.from("jwt", token)
+                                        .httpOnly(true)
+                                        .secure(true) // Typically true in production for HTTPS
+                                        .path("/")
+                                        .maxAge(Duration.ofMillis(jwtExpiration))
+                                        .sameSite("None") // "None" if cross-domain in prod, but needs Secure=true
+                                        .build();
+
+                        return ResponseEntity.ok()
+                                        .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                                        .body("{\"message\": \"Login successful\", \"token\": \"" + token + "\"}");
+                }
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"message\": \"Invalid credentials\"}");
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"message\": \"Invalid credentials\"}");
-    }
+        @PostMapping("/logout")
+        public ResponseEntity<String> logout() {
+                ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                                .httpOnly(true)
+                                .secure(true)
+                                .path("/")
+                                .maxAge(0)
+                                .sameSite("None")
+                                .build();
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
-        ResponseCookie cookie = ResponseCookie.from("jwt", "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(0)
-                .sameSite("None")
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("{\"message\": \"Logout successful\"}");
-    }
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                                .body("{\"message\": \"Logout successful\"}");
+        }
 }

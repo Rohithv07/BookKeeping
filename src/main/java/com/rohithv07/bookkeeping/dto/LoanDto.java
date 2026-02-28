@@ -28,6 +28,8 @@ public class LoanDto {
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;
 
+    private String currency;
+
     @NotNull(message = "Date lent is required")
     private LocalDate dateLent;
 
