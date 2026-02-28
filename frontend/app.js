@@ -396,7 +396,7 @@ function renderLoansTable(loans) {
         // Safe check for borrower name directly mapped from LoanDto
         const borrowerName = loan.borrowerName || `Borrower #${loan.borrowerId}`;
         const currencyCode = loan.currency || 'USD';
-        const amountFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(loan.amount);
+        const amountFormatted = new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode }).format(loan.amount);
 
         const row = document.createElement('tr');
         row.innerHTML = `
