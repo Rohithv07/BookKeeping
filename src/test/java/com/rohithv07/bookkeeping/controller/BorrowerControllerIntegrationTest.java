@@ -2,7 +2,9 @@ package com.rohithv07.bookkeeping.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rohithv07.bookkeeping.dto.BorrowerDto;
+import com.rohithv07.bookkeeping.model.AppUser;
 import com.rohithv07.bookkeeping.model.Borrower;
+import com.rohithv07.bookkeeping.repository.AppUserRepository;
 import com.rohithv07.bookkeeping.repository.BorrowerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,11 +36,19 @@ class BorrowerControllerIntegrationTest {
         private BorrowerRepository borrowerRepository;
 
         @Autowired
+        private AppUserRepository userRepository;
+
+        @Autowired
         private ObjectMapper objectMapper;
+
+        private AppUser adminUser;
 
         @BeforeEach
         void setUp() {
                 borrowerRepository.deleteAll();
+                userRepository.deleteAll();
+                adminUser = AppUser.builder().username("admin").password("pass").build();
+                adminUser = userRepository.save(adminUser);
         }
 
         @Test
@@ -63,6 +73,7 @@ class BorrowerControllerIntegrationTest {
                 Borrower borrower = Borrower.builder()
                                 .name("List User")
                                 .email("listuser@example.com")
+                                .user(adminUser)
                                 .build();
                 borrowerRepository.save(borrower);
 
@@ -77,6 +88,7 @@ class BorrowerControllerIntegrationTest {
                 Borrower borrower = Borrower.builder()
                                 .name("Get By Id User")
                                 .email("getiduser@example.com")
+                                .user(adminUser)
                                 .build();
                 Borrower saved = borrowerRepository.save(borrower);
 

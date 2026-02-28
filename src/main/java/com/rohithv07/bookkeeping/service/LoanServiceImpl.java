@@ -2,9 +2,11 @@ package com.rohithv07.bookkeeping.service;
 
 import com.rohithv07.bookkeeping.dto.LoanDto;
 import com.rohithv07.bookkeeping.exception.ResourceNotFoundException;
+import com.rohithv07.bookkeeping.model.AppUser;
 import com.rohithv07.bookkeeping.model.Borrower;
 import com.rohithv07.bookkeeping.model.Loan;
 import com.rohithv07.bookkeeping.model.LoanStatus;
+import com.rohithv07.bookkeeping.repository.AppUserRepository;
 import com.rohithv07.bookkeeping.repository.BorrowerRepository;
 import com.rohithv07.bookkeeping.repository.LoanRepository;
 import org.slf4j.Logger;
@@ -22,25 +24,39 @@ public class LoanServiceImpl implements LoanService {
     // Explicit constructor injection without Lombok magic
     private final LoanRepository loanRepository;
     private final BorrowerRepository borrowerRepository;
+    private final AppUserRepository userRepository;
 
-    public LoanServiceImpl(LoanRepository loanRepository, BorrowerRepository borrowerRepository) {
+    public LoanServiceImpl(LoanRepository loanRepository, BorrowerRepository borrowerRepository,
+            AppUserRepository userRepository) {
         this.loanRepository = loanRepository;
         this.borrowerRepository = borrowerRepository;
+        this.userRepository = userRepository;
+    }
+
+    private String getCurrentUsername() {
+        return org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                .getName();
     }
 
     @Override
     public LoanDto addLoan(LoanDto loanDto) {
-        log.info("Adding new loan for borrower ID: {}", loanDto.getBorrowerId());
+        String username = getCurrentUsername();
+        log.info("Adding new loan for borrower ID: {} by user: {}", loanDto.getBorrowerId(), username);
 
-        Borrower borrower = borrowerRepository.findById(loanDto.getBorrowerId())
+        AppUser user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        Borrower borrower = borrowerRepository.findByIdAndUserUsername(loanDto.getBorrowerId(), username)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException("Borrower not found with ID: " + loanDto.getBorrowerId()));
+                        () -> new ResourceNotFoundException(
+                                "Borrower not found natively or access denied for ID: " + loanDto.getBorrowerId()));
 
         Loan loan = Loan.builder()
                 .borrower(borrower)
                 .amount(loanDto.getAmount())
                 .dateLent(loanDto.getDateLent())
                 .status(LoanStatus.ACTIVE)
+                .user(user)
                 .build();
 
         Loan savedLoan = loanRepository.save(loan);
@@ -51,8 +67,8 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public List<LoanDto> getAllLoans() {
-        log.info("Fetching all loans");
-        List<Loan> loans = loanRepository.findAll();
+        log.info("Fetching all loans for user: {}", getCurrentUsername());
+        List<Loan> loans = loanRepository.findByUserUsername(getCurrentUsername());
         log.debug("Found {} loans in total", loans.size());
 
         return loans.stream()
@@ -62,8 +78,8 @@ public class LoanServiceImpl implements LoanService {
 
     @Override
     public List<LoanDto> getActiveLoans() {
-        log.info("Fetching all active loans");
-        List<Loan> activeLoans = loanRepository.findByStatus(LoanStatus.ACTIVE);
+        log.info("Fetching all active loans for user: {}", getCurrentUsername());
+        List<Loan> activeLoans = loanRepository.findByStatusAndUserUsername(LoanStatus.ACTIVE, getCurrentUsername());
         log.debug("Found {} active loans", activeLoans.size());
 
         return activeLoans.stream()
@@ -103,9 +119,10 @@ public class LoanServiceImpl implements LoanService {
 
     // Internal helper to get entity
     private Loan getLoanEntityById(Long id) {
-        return loanRepository.findById(id)
+        String username = getCurrentUsername();
+        return loanRepository.findByIdAndUserUsername(id, username)
                 .orElseThrow(() -> {
-                    log.error("Loan not found with ID: {}", id);
+                    log.error("Loan not found with ID {} for user {}", id, username);
                     return new ResourceNotFoundException("Loan not found with ID: " + id);
                 });
     }

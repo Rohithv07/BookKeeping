@@ -27,6 +27,11 @@ public class Loan {
     @JoinColumn(name = "borrower_id", nullable = false)
     private Borrower borrower;
 
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
+
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;

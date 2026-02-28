@@ -2,9 +2,11 @@ package com.rohithv07.bookkeeping.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rohithv07.bookkeeping.dto.LoanDto;
+import com.rohithv07.bookkeeping.model.AppUser;
 import com.rohithv07.bookkeeping.model.Borrower;
 import com.rohithv07.bookkeeping.model.Loan;
 import com.rohithv07.bookkeeping.model.LoanStatus;
+import com.rohithv07.bookkeeping.repository.AppUserRepository;
 import com.rohithv07.bookkeeping.repository.BorrowerRepository;
 import com.rohithv07.bookkeeping.repository.LoanRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,18 +45,27 @@ class LoanControllerIntegrationTest {
         private BorrowerRepository borrowerRepository;
 
         @Autowired
+        private AppUserRepository userRepository;
+
+        @Autowired
         private ObjectMapper objectMapper;
 
         private Borrower savedBorrower;
+        private AppUser adminUser;
 
         @BeforeEach
         void setUp() {
                 loanRepository.deleteAll();
                 borrowerRepository.deleteAll();
+                userRepository.deleteAll();
+
+                adminUser = AppUser.builder().username("admin").password("pass").build();
+                adminUser = userRepository.save(adminUser);
 
                 Borrower borrower = Borrower.builder()
                                 .name("Integration Loan User")
                                 .email("loanuser@example.com")
+                                .user(adminUser)
                                 .build();
                 savedBorrower = borrowerRepository.save(borrower);
         }
@@ -83,6 +94,7 @@ class LoanControllerIntegrationTest {
                                 .dateLent(LocalDate.now())
                                 .dueDate(LocalDate.now().plusMonths(1))
                                 .status(LoanStatus.ACTIVE)
+                                .user(adminUser)
                                 .build();
                 loanRepository.save(loan);
 
@@ -100,6 +112,7 @@ class LoanControllerIntegrationTest {
                                 .dateLent(LocalDate.now())
                                 .dueDate(LocalDate.now().plusMonths(1))
                                 .status(LoanStatus.ACTIVE)
+                                .user(adminUser)
                                 .build();
                 Loan savedLoan = loanRepository.save(loan);
 
@@ -115,6 +128,7 @@ class LoanControllerIntegrationTest {
                                 .dateLent(LocalDate.now())
                                 .dueDate(LocalDate.now().plusMonths(1))
                                 .status(LoanStatus.ACTIVE)
+                                .user(adminUser)
                                 .build();
                 Loan savedLoan = loanRepository.save(loan);
 

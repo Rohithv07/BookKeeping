@@ -1,5 +1,6 @@
 package com.rohithv07.bookkeeping.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,6 +28,11 @@ public class Borrower {
     private String email;
 
     private String phone;
+
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
 
     @OneToMany(mappedBy = "borrower", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Loan> loans;

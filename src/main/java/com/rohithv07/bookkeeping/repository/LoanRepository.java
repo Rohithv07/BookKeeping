@@ -7,7 +7,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import java.util.Optional;
+
 @Repository
 public interface LoanRepository extends JpaRepository<Loan, Long> {
-    List<Loan> findByStatus(LoanStatus status);
+    List<Loan> findByStatusAndUserUsername(LoanStatus status, String username);
+
+    List<Loan> findByUserUsername(String username);
+
+    Optional<Loan> findByIdAndUserUsername(Long id, String username);
 }
