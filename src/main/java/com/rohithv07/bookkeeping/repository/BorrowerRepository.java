@@ -14,4 +14,6 @@ public interface BorrowerRepository extends JpaRepository<Borrower, Long> {
     List<Borrower> findByUserUsername(String username);
 
     Optional<Borrower> findByIdAndUserUsername(Long id, String username);
+
+    List<Borrower> findByUserIsNull();
 }
