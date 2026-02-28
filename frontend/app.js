@@ -113,6 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Invalid credentials');
             }
 
+            const data = await response.json();
+            if (data.token) {
+                localStorage.setItem('jwtToken', data.token);
+            }
+
             // Successfully logged in
             showApp();
             initializeData(); // Re-fetch data after successful login
@@ -173,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 credentials: 'include'
             });
         } finally {
+            localStorage.removeItem('jwtToken');
             loginForm.reset();
             showLogin();
             showAlert('You have been safely logged out.', 'success');
@@ -195,7 +201,8 @@ async function fetchBorrowers() {
         const response = await fetch(`${API_BASE_URL}/borrowers`, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                ...getAuthHeaders()
             },
             credentials: 'include'
         });
@@ -230,9 +237,10 @@ async function fetchActiveLoans() {
         const response = await fetch(`${API_BASE_URL}/loans`, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                ...getAuthHeaders()
             },
-            credentials: 'include' // Sent HttpOnly JWT cookie automatically
+            credentials: 'include' // Sent HttpOnly JWT cookie automatically or Bearer
         });
 
         if (!response.ok) {
@@ -265,7 +273,8 @@ async function handleBorrowerSubmit(e) {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-XSRF-TOKEN': getCsrfToken()
+                'X-XSRF-TOKEN': getCsrfToken(),
+                ...getAuthHeaders()
             },
             credentials: 'include',
             body: JSON.stringify(borrowerData)
@@ -294,6 +303,7 @@ async function handleLoanSubmit(e) {
     const loanData = {
         borrowerId: parseInt(document.getElementById('loan-borrower').value, 10),
         amount: parseFloat(document.getElementById('loan-amount').value),
+        currency: document.getElementById('loan-currency').value,
         dateLent: document.getElementById('loan-date').value
     };
 
@@ -303,7 +313,8 @@ async function handleLoanSubmit(e) {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-XSRF-TOKEN': getCsrfToken()
+                'X-XSRF-TOKEN': getCsrfToken(),
+                ...getAuthHeaders()
             },
             credentials: 'include',
             body: JSON.stringify(loanData)
@@ -341,7 +352,8 @@ async function markLoanRepaid(loanId) {
         const response = await fetch(`${API_BASE_URL}/loans/${loanId}/repay`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
             body: JSON.stringify({ amount: amount }),
             credentials: 'include'
@@ -383,7 +395,8 @@ function renderLoansTable(loans) {
     loans.forEach(loan => {
         // Safe check for borrower name directly mapped from LoanDto
         const borrowerName = loan.borrowerName || `Borrower #${loan.borrowerId}`;
-        const amountFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(loan.amount);
+        const currencyCode = loan.currency || 'USD';
+        const amountFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(loan.amount);
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -447,4 +460,9 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('jwtToken');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
