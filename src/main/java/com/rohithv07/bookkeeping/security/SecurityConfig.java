@@ -59,7 +59,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // Set to localhost for local dev and the GitHub pages domain for production
         configuration.setAllowedOriginPatterns(
-                Arrays.asList("http://localhost:*", "http://127.0.0.1:*", "https://rohithv07.github.io"));
+                Arrays.asList("http://localhost:*", "http://127.0.0.1:*", "https://rohithv07.github.io",
+                        "https://*.run.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         // Allow Credentials is required for HttpOnly Cookies

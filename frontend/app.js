@@ -75,6 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loanForm.addEventListener('submit', handleLoanSubmit);
     btnRefresh.addEventListener('click', fetchActiveLoans);
 
+    // Dynamic Currency Icon Swapper for the Add Loan UI
+    document.getElementById('loan-currency').addEventListener('change', (e) => {
+        const symbolMap = { 'USD': '$', 'EUR': '€', 'GBP': '£', 'INR': '₹', 'CAD': 'CA$', 'AUD': 'AU$' };
+        const icon = document.getElementById('loan-currency-icon');
+        if (icon) icon.textContent = symbolMap[e.target.value] || '$';
+    });
+
     // Authentication Listeners
     linkShowSignup.addEventListener('click', (e) => {
         e.preventDefault();
