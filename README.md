@@ -1,6 +1,13 @@
 # BookKeeping
 Record the debts that we are lending to other people.
 
+💻 User Guide
+1. Visit the App: Navigate to https://rohithv07.github.io/BookKeeping/.
+2. Sign Up: Register for a new account. (Password requirements: Minimum one uppercase, one lowercase, one number, and one special character).
+3. Login: Access your dashboard using your new credentials.
+4. Track Debts: Add a borrower by entering their details and the amount lent.
+5. Manage Repayments: When a borrower repays a portion of the debt, edit their record to update the remaining balance.
+
 ## What was implemented
 
 1. **Spring Boot App**: A robust REST API running on Java 21, built using Gradle.
